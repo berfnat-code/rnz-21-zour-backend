@@ -43,7 +43,40 @@ export default async function handler(req, res) {
     }),
   });
 
-  // TODO : déclencher l'email MailerLite ici (prochaine étape)
+  // Déclencher l'email MailerLite avec le code d'accès
+  try {
+    const mlHeaders = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.MAILERLITE_API_KEY}`,
+    };
+
+    // Trouver le groupe "Acheteur 21 Zour" par son nom
+    const groupsRes = await fetch(
+      'https://connect.mailerlite.com/api/groups?filter[name]=Acheteur 21 Zour',
+      { headers: mlHeaders }
+    );
+    const groupsData = await groupsRes.json();
+    const groupId = groupsData?.data?.[0]?.id;
+
+    if (!groupId) {
+      console.error('Groupe MailerLite introuvable');
+    } else {
+      const mlRes = await fetch('https://connect.mailerlite.com/api/subscribers', {
+        method: 'POST',
+        headers: mlHeaders,
+        body: JSON.stringify({
+          email,
+          fields: { code_acces: code },
+          groups: [groupId],
+        }),
+      });
+      if (!mlRes.ok) {
+        console.error('Erreur MailerLite:', await mlRes.text());
+      }
+    }
+  } catch (err) {
+    console.error('Erreur appel MailerLite:', err);
+  }
 
   return res.status(200).json({ received: true, code });
 }

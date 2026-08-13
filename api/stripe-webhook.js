@@ -47,7 +47,7 @@ export default async function handler(req, res) {
   try {
     const mlHeaders = {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.MAILERLITE_API_KEY}`,
+      Authorization: `Bearer ${process.env.(process.env.MAILERLITE_API_KEY || '').replace(/[^\x20-\x7E]/g, '').trim()}`,
     };
 
     // Trouver le groupe "Acheteur 21 Zour" par son nom

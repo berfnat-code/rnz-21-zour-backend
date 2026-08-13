@@ -1,3 +1,4 @@
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Méthode non autorisée' });
 
@@ -22,7 +23,6 @@ export default async function handler(req, res) {
     'Content-Type': 'application/json',
   };
 
-  // Générer un code lisible du type RNZ-XXXX-XXXX
   function generateCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let part = () =>
@@ -32,7 +32,6 @@ export default async function handler(req, res) {
 
   const code = generateCode();
 
-  // Enregistrer le code dans Supabase
   await fetch(`${SUPABASE_URL}/rest/v1/access_codes`, {
     method: 'POST',
     headers,
@@ -43,14 +42,13 @@ export default async function handler(req, res) {
     }),
   });
 
-  // Déclencher l'email MailerLite avec le code d'accès
   try {
+    const cleanKey = (process.env.MAILERLITE_API_KEY || '').replace(/[^\x20-\x7E]/g, '').trim();
     const mlHeaders = {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.(process.env.MAILERLITE_API_KEY || '').replace(/[^\x20-\x7E]/g, '').trim()}`,
+      Authorization: `Bearer ${cleanKey}`,
     };
 
-    // Trouver le groupe "Acheteur 21 Zour" par son nom
     const groupsRes = await fetch(
       'https://connect.mailerlite.com/api/groups?filter[name]=Acheteur 21 Zour',
       { headers: mlHeaders }

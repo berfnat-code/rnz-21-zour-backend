@@ -1,4 +1,3 @@
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Méthode non autorisée' });
 
@@ -55,12 +54,11 @@ export default async function handler(req, res) {
       Authorization: `Bearer ${cleanKey}`,
     };
 
-    const groupsRes = await fetch(
-      'https://connect.mailerlite.com/api/groups?filter%5Bname%5D=Acheteur%2021%20Zour',
-      { headers: mlHeaders }
-    );
+    const groupsRes = await fetch('https://connect.mailerlite.com/api/groups?limit=50', {
+      headers: mlHeaders,
+    });
     const groupsData = await groupsRes.json();
-    const groupId = groupsData?.data?.[0]?.id;
+    const groupId = groupsData?.data?.find((g) => g.name === 'Acheteur 21 Zour')?.id;
 
     if (!groupId) {
       console.error('Groupe MailerLite introuvable');

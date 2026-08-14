@@ -15,8 +15,10 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Email manquant dans la session' });
   }
 
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
+  const clean = (v) => (v || '').replace(/[^\x20-\x7E]/g, '').trim();
+
+  const SUPABASE_URL = clean(process.env.SUPABASE_URL);
+  const SUPABASE_KEY = clean(process.env.SUPABASE_SERVICE_KEY);
   const headers = {
     apikey: SUPABASE_KEY,
     Authorization: `Bearer ${SUPABASE_KEY}`,
@@ -32,25 +34,29 @@ export default async function handler(req, res) {
 
   const code = generateCode();
 
-  await fetch(`${SUPABASE_URL}/rest/v1/access_codes`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      code,
-      email,
-      stripe_session_id: session.id,
-    }),
-  });
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/access_codes`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        code,
+        email,
+        stripe_session_id: session.id,
+      }),
+    });
+  } catch (err) {
+    console.error('Erreur Supabase:', err);
+  }
 
   try {
-    const cleanKey = (process.env.MAILERLITE_API_KEY || '').replace(/[^\x20-\x7E]/g, '').trim();
+    const cleanKey = clean(process.env.MAILERLITE_API_KEY);
     const mlHeaders = {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${cleanKey}`,
     };
 
     const groupsRes = await fetch(
-      'https://connect.mailerlite.com/api/groups?filter[name]=Acheteur 21 Zour',
+      'https://connect.mailerlite.com/api/groups?filter%5Bname%5D=Acheteur%2021%20Zour',
       { headers: mlHeaders }
     );
     const groupsData = await groupsRes.json();

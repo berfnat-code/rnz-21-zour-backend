@@ -22,6 +22,7 @@ export default async function handler(req, res) {
     apikey: SUPABASE_KEY,
     Authorization: `Bearer ${SUPABASE_KEY}`,
     'Content-Type': 'application/json',
+    Prefer: 'return=representation',
   };
 
   function generateCode() {
@@ -32,9 +33,10 @@ export default async function handler(req, res) {
   }
 
   const code = generateCode();
+  let supabaseError = null;
 
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/access_codes`, {
+    const supaRes = await fetch(`${SUPABASE_URL}/rest/v1/access_codes`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -43,8 +45,13 @@ export default async function handler(req, res) {
         stripe_session_id: session.id,
       }),
     });
+    if (!supaRes.ok) {
+      supabaseError = await supaRes.text();
+      console.error('Erreur Supabase (réponse non-OK):', supaRes.status, supabaseError);
+    }
   } catch (err) {
-    console.error('Erreur Supabase:', err);
+    supabaseError = String(err);
+    console.error('Erreur Supabase (exception):', err);
   }
 
   try {
@@ -80,5 +87,5 @@ export default async function handler(req, res) {
     console.error('Erreur appel MailerLite:', err);
   }
 
-  return res.status(200).json({ received: true, code });
+  return res.status(200).json({ received: true, code, supabaseError });
 }

@@ -13,8 +13,10 @@ export default async function handler(req, res) {
   const { code, deviceId } = req.body;
   if (!code) return res.status(400).json({ error: 'Code manquant' });
 
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
+  const clean = (v) => (v || '').replace(/[^\x20-\x7E]/g, '').trim();
+
+  const SUPABASE_URL = clean(process.env.SUPABASE_URL);
+  const SUPABASE_KEY = clean(process.env.SUPABASE_SERVICE_KEY);
   const headers = {
     apikey: SUPABASE_KEY,
     Authorization: `Bearer ${SUPABASE_KEY}`,
